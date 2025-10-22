@@ -1,50 +1,59 @@
-public class Solution {
+
+class Solution {
     public int[] maxNumber(int[] nums1, int[] nums2, int k) {
-        int get_from_nums1 = Math.min(nums1.length, k);
-        int[] ans = new int[k];
-        for (int i = Math.max(k - nums2.length, 0); i <= get_from_nums1; i++) {
-            int[] res1 = new int[i];
-            int[] res2 = new int[k - i];
-            int[] res = new int[k];
-            res1 = solve(nums1, i);
-            res2 = solve(nums2, k - i);
-            int pos1 = 0, pos2 = 0, tpos = 0;
-            
-            while (res1.length > 0 && res2.length > 0 && pos1 < res1.length && pos2 < res2.length) {
-                if (compare(res1, pos1, res2, pos2))
-                    res[tpos++] = res1[pos1++];
-                else
-                    res[tpos++] = res2[pos2++];
+        int n1 = nums1.length;
+        int n2 = nums2.length;
+        int[] best = new int[k];
+
+        for (int i = Math.max(0, k - n2); i <= Math.min(k, n1); i++) {
+            int[] ss1 = pmc(nums1, i); 
+            int[] ss2 = pmc(nums2, k - i);
+            int[] c = merge(ss1, ss2, k);
+            if (greater(c, 0, best, 0)) {
+                best = c;
             }
-            while (pos1 < res1.length)
-                res[tpos++] = res1[pos1++];
-            while (pos2 < res2.length)
-                res[tpos++] = res2[pos2++];
-
-            if (!compare(ans, 0, res, 0))
-                ans = res;
         }
-
-        return ans;
+        return best;
     }
 
-    public boolean compare(int[] nums1, int start1, int[] nums2, int start2) {
-        for (; start1 < nums1.length && start2 < nums2.length; start1++, start2++) {
-            if (nums1[start1] > nums2[start2]) return true;
-            if (nums1[start1] < nums2[start2]) return false;
-        }
-        return start1 != nums1.length;
-    }
+    private int[] pmc(int[] nums, int t) {
+        if (t == 0) return new int[0];
+        Deque<Integer> st1 = new LinkedList<>(); 
+        int toRemove = nums.length - t; // how many elements we can drop
 
-    public int[] solve(int[] nums, int k) {
-        int[] res = new int[k];
-        int len = 0;
-        for (int i = 0; i < nums.length; i++) {
-            while (len > 0 && len + nums.length - i > k && res[len - 1] < nums[i]) {
-                len--;
+        for (int x : nums) {
+            while (!st1.isEmpty() && st1.peekLast() < x && toRemove > 0) {
+                st1.removeLast();
+                toRemove--;
             }
-            if (len < k)
-                res[len++] = nums[i];
+            st1.addLast(x);
+        }
+        int[] res = new int[t];
+        for (int i = 0; i < t; i++) {
+            res[i] = st1.removeFirst();
         }
         return res;
-    } }
+    }
+
+    private int[] merge(int[] a, int[] b, int k) {
+        int[] res = new int[k];
+        int i = 0, j = 0, r = 0;
+        while (r < k) {
+            if (greater(a, i, b, j)) {
+                res[r++] = a[i++];
+            } else {
+                res[r++] = b[j++];
+            }
+        }
+        return res;
+    }
+
+    private boolean greater(int[] a, int i, int[] b, int j) {
+        int n = a.length, m = b.length;
+        while (i < n && j < m) {
+            if (a[i] != b[j]) return a[i] > b[j];
+            i++; j++;
+        }
+        return (n - i) > (m - j);//else the one with the more length will be considered as greater 
+    }
+}
